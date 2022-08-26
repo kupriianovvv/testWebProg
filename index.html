@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>piu</title>
+</head>
+<body>
+	<table id="data">
+	</table>
+	<button id="paint">Paint></button>
+	<button id="create">Create new</button>
+	<button id="delete">delete</button>
+	<button id="update">update</button>
+</body>
+<script>
+	const getData = async () => {
+		const response = await fetch("http://localhost:3000");
+		const data = await response.json();
+		console.log(data);
+		return data;
+	}
+	
+
+	const convertJsonToHtmlTable = async () => {
+        //Get the headers from JSON data
+        const employeeJson = await getData()
+        if (employeeJson.length === 0) {
+        	document.getElementById("data").innerHTML = ""
+        	return;
+        }
+        let headers = Object.keys(employeeJson[0]);
+         
+        //Prepare html header
+        let headerRowHTML = '<tr>';
+        for (let i = 0; i <headers.length; i++){
+            headerRowHTML += '<th>'+ headers[i] + '</th>';
+        }
+        headerRowHTML += '</tr>';       
+         
+        //Prepare all the employee records as HTML
+        let allRecordsHTML='';
+        for (let i = 0; i < employeeJson.length; i++){
+         
+            //Prepare html row
+            allRecordsHTML += '<tr>';
+            for (let j = 0; j < headers.length; j++){
+                let header = headers[j];
+                allRecordsHTML += '<td>' + employeeJson[i][header] + '</td>';
+            }
+            allRecordsHTML += '</tr>';
+             
+        }
+         
+        //Append the table header and all records
+        let table = document.getElementById("data");
+        table.innerHTML = headerRowHTML + allRecordsHTML;
+    }
+    
+    const createData = async () => {
+    	const id = prompt("enter id of new item");
+    	const name = prompt("enter name of new item");
+    	const power = prompt("enter power of new item");
+
+    	if (name == null || power == null || id == null) {
+    		alert("you didn't enter all info");
+    		return;
+    	}
+
+    	const response = await fetch("http://localhost:3000", {
+    		method: "POST",
+    		headers: {
+    			"Content-Type": "application/json;charset=utf-8"
+    		},
+    		body: JSON.stringify({ id: Number(id), name, power: Number(power) })
+    	});
+    	const json = await response.json();
+    	console.log(json)
+    	convertJsonToHtmlTable();
+    	
+    }
+
+    const deleteData = async () => {
+    	const id = prompt("enter id of item to delete");
+    	if (id == null) {
+    		alert("you didn't enter id");
+    		return;
+    	}
+
+    	const response = await fetch(`http://localhost:3000/${id}`, {
+    		method: "DELETE"
+    	});
+
+    	const json = await response.json();
+    	console.log(json)
+
+    	convertJsonToHtmlTable();
+    }
+
+    const updateData = async () => {
+    	const id = prompt("enter id of item you want to update");
+    	if (id == null) {
+    		alert("you didn't enter id");
+    		return;
+    	}
+    	const name = prompt("enter new name or leave empty if you don't want to change it");
+    	const power = prompt("enter new power or leave empty if you don't want to change it");
+    	if (name == null && power == null) {
+    		alert("you didn't enter any change");
+    		return;
+    	}
+
+
+    	const newData = { id: Number(id) };
+
+    	if (name) newData.name = name;
+    	if (power === 0 || power) newData.power = Number(power);
+
+    	const response = await fetch(`http://localhost:3000/${id}`, {
+    		method: "PUT",
+    		headers: {
+    			"Content-Type": "application/json;charset=utf-8"
+    		},
+    		body: JSON.stringify(newData)
+    	});
+    	const json = await response.json();
+    	console.log(json)
+
+    	convertJsonToHtmlTable()
+    }
+    
+
+    
+
+    document.getElementById("paint").addEventListener("click", convertJsonToHtmlTable);
+    document.getElementById("create").addEventListener("click", createData);
+    document.getElementById("delete").addEventListener("click", deleteData);
+    document.getElementById("update").addEventListener("click", updateData)
+
+
+</script>
+</html>
